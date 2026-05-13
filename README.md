@@ -10,7 +10,7 @@
 
 </div>
 
-Uma loja online de streetwear feita pra quem vive a cultura urbana — não como tendência, mas como identidade. Roupas com alma de quebrada, atitude na peça e zero compromisso com padrão.
+Uma loja online de streetwear feita pra quem vive a cultura urbana, não como tendência, mas como identidade. Roupas com alma de quebrada, atitude na peça e zero compromisso com padrão.
 
 Este repositório é o e-commerce completo da marca: vitrine pública, carrinho, finalização de pedido e um painel administrativo pra gerenciar tudo por dentro.
 
@@ -20,7 +20,7 @@ Este repositório é o e-commerce completo da marca: vitrine pública, carrinho,
 
 > *"Não é só roupa. É identidade."*
 
-A DURK nasceu da vontade de traduzir em código aquilo que a rua já sabe: estilo é fala, é grito, é resistência. Por isso o projeto não é só um catálogo bonito — é uma experiência inteira, do primeiro scroll ao "pedido confirmado".
+A DURK nasceu da vontade de traduzir em código aquilo que a rua já sabe: estilo é fala, é grito, é resistência. Por isso o projeto não é só um catálogo bonito, é uma experiência inteira, do primeiro scroll ao "pedido confirmado".
 
 <br>
 
@@ -53,8 +53,6 @@ Frontend    HTML semântico + Tailwind CSS
 Ícones      Font Awesome
 Ambiente    XAMPP (Apache + MySQL)
 ```
-
-Sem framework. Sem build. Só o essencial pra rodar — e isso é proposital.
 
 <br>
 
