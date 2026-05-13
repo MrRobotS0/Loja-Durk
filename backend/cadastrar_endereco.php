@@ -1,26 +1,38 @@
 <?php
+session_start();
 include 'db.php';
 
-$user_id = $_POST['user_id'];
-$rua = $_POST['rua'];
-$numero = $_POST['numero'];
-$complemento = $_POST['complemento'];
-$bairro = $_POST['bairro'];
-$cidade = $_POST['cidade'];
-$estado = $_POST['estado'];
-$cep = $_POST['cep'];
-$pais = $_POST['pais'];
+if (!isset($_SESSION['usuario_id'])) {
+    http_response_code(403);
+    exit('Não autorizado.');
+}
 
-$check = mysqli_query($conn, "SELECT id FROM enderecos WHERE user_id = $user_id");
-if ($check && mysqli_num_rows($check) > 0) {
+$user_id = (int) $_SESSION['usuario_id'];
+$rua = trim($_POST['rua'] ?? '');
+$numero = trim($_POST['numero'] ?? '');
+$complemento = !empty($_POST['complemento']) ? trim($_POST['complemento']) : null;
+$bairro = trim($_POST['bairro'] ?? '');
+$cidade = trim($_POST['cidade'] ?? '');
+$estado = trim($_POST['estado'] ?? '');
+$cep = trim($_POST['cep'] ?? '');
+$pais = trim($_POST['pais'] ?? 'Brasil');
+
+$check = $conn->prepare("SELECT id FROM enderecos WHERE user_id = ?");
+$check->bind_param("i", $user_id);
+$check->execute();
+if ($check->get_result()->num_rows > 0) {
+    $check->close();
     exit('Já existe um endereço cadastrado.');
 }
+$check->close();
 
-$sql = "INSERT INTO enderecos (user_id, rua, numero, complemento, bairro, cidade, estado, cep, pais)
-        VALUES ('$user_id', '$rua', '$numero', '$complemento', '$bairro', '$cidade', '$estado', '$cep', '$pais')";
+$stmt = $conn->prepare("INSERT INTO enderecos (user_id, rua, numero, complemento, bairro, cidade, estado, cep, pais)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("issssssss", $user_id, $rua, $numero, $complemento, $bairro, $cidade, $estado, $cep, $pais);
 
-if (mysqli_query($conn, $sql)) {
+if ($stmt->execute()) {
     echo 'Endereço cadastrado com sucesso';
 } else {
-    echo 'Erro ao cadastrar: ' . mysqli_error($conn);
+    echo 'Erro ao cadastrar.';
 }
+$stmt->close();

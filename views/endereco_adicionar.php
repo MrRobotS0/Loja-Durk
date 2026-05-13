@@ -1,99 +1,96 @@
 <?php
 include '../includes/verifica_login.php';
 include '../backend/db.php';
-include '../includes/header.php';
 
-if (!isset($_SESSION['usuario_id'])) {
-    header("Location: login.php");
-    exit();
-}
-
+$erro = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $userId = $_SESSION['usuario_id'];
+    $userId = (int) $_SESSION['usuario_id'];
     $rua = trim($_POST['rua']);
     $numero = trim($_POST['numero']);
-    $complemento = trim($_POST['complemento']);
+    $complemento = !empty($_POST['complemento']) ? trim($_POST['complemento']) : null;
     $bairro = trim($_POST['bairro']);
     $cidade = trim($_POST['cidade']);
     $estado = trim($_POST['estado']);
     $cep = trim($_POST['cep']);
-    $pais = trim($_POST['pais']);
+    $pais = trim($_POST['pais']) ?: 'Brasil';
 
-    $complemento = !empty($_POST['complemento']) ? trim($_POST['complemento']) : null;
-
-    $stmt = $conn->prepare("INSERT INTO enderecos 
-    (user_id, rua, numero, complemento, bairro, cidade, estado, cep, pais) 
+    $stmt = $conn->prepare("INSERT INTO enderecos
+    (user_id, rua, numero, complemento, bairro, cidade, estado, cep, pais)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssssss", $userId, $rua, $numero, $complemento, $bairro, $cidade, $estado, $cep, $pais);
 
-    if ($stmt) {
-        $stmt->bind_param("issssssss", $userId, $rua, $numero, $complemento, $bairro, $cidade, $estado, $cep, $pais);
-        $stmt->execute();
+    if ($stmt->execute()) {
         $stmt->close();
         header("Location: minhaconta.php");
         exit();
     } else {
-        die("Erro na preparação da query: " . $conn->error);
+        $erro = 'Erro ao salvar o endereço. Tente novamente.';
+        $stmt->close();
     }
-
-    $stmt->close();
 }
+
+include '../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Adicionar Endereço</title>
-  <link rel="icon" type="image/png" href="imagens/logo.png">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@animxyz/core" />
-</head>
+<title>Adicionar Endereço · DURK</title>
 
-<body class="bg-gray-100">
-  <main class="max-w-xl mx-auto py-12 px-6 animxyz-in" xyz="fade small duration-10">
-    <div class="bg-white shadow-xl rounded-xl p-6">
-      <h1 class="text-2xl font-bold text-gray-800 mb-6">🏠 Adicionar Endereço</h1>
+<main class="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-10">
 
-      <?php if (isset($erro)): ?>
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          <?= htmlspecialchars($erro) ?>
-        </div>
-      <?php endif; ?>
+  <div class="mb-10">
+    <span class="text-yellow-400 text-xs uppercase tracking-[0.4em] font-bold">/ Cadastro</span>
+    <h1 class="font-display text-5xl text-white mt-2">NOVO ENDEREÇO</h1>
+    <p class="text-zinc-400 mt-2">Pra gente saber pra onde mandar seus drops.</p>
+  </div>
 
-      <form method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <input type="text" name="rua" placeholder="Rua" required class="input-style">
-        <input type="text" name="numero" placeholder="Número" required class="input-style">
-        <input type="text" name="complemento" placeholder="Complemento" class="input-style">
-        <input type="text" name="bairro" placeholder="Bairro" required class="input-style">
-        <input type="text" name="cidade" placeholder="Cidade" required class="input-style">
-        <input type="text" name="estado" placeholder="Estado" required class="input-style">
-        <input type="text" name="cep" placeholder="CEP" required class="input-style">
-        <input type="text" name="pais" placeholder="País" required class="input-style">
+  <div class="bg-zinc-950 border border-zinc-900 rounded-2xl p-6 md:p-8">
+    <?php if (!empty($erro)): ?>
+      <div class="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-5 flex items-center gap-2">
+        <i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($erro) ?>
+      </div>
+    <?php endif; ?>
 
-        <div class="sm:col-span-2 flex justify-between mt-4">
-          <a href="minhaconta.php" class="px-4 py-2 text-sm rounded bg-gray-200 hover:bg-gray-300 transition">← Voltar</a>
-          <button type="submit" class="px-6 py-2 text-white bg-green-600 hover:bg-green-700 rounded transition">
-            Salvar Endereço
-          </button>
-        </div>
-      </form>
-    </div>
-  </main>
+    <form method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div class="sm:col-span-2">
+        <label class="block text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2">Rua</label>
+        <input type="text" name="rua" required class="w-full px-4 py-3 bg-black border border-zinc-800 text-white rounded-lg focus:outline-none focus:border-yellow-400 transition" />
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2">Número</label>
+        <input type="text" name="numero" required class="w-full px-4 py-3 bg-black border border-zinc-800 text-white rounded-lg focus:outline-none focus:border-yellow-400 transition" />
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2">Complemento</label>
+        <input type="text" name="complemento" class="w-full px-4 py-3 bg-black border border-zinc-800 text-white rounded-lg focus:outline-none focus:border-yellow-400 transition" placeholder="opcional" />
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2">Bairro</label>
+        <input type="text" name="bairro" required class="w-full px-4 py-3 bg-black border border-zinc-800 text-white rounded-lg focus:outline-none focus:border-yellow-400 transition" />
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2">CEP</label>
+        <input type="text" name="cep" required class="w-full px-4 py-3 bg-black border border-zinc-800 text-white rounded-lg focus:outline-none focus:border-yellow-400 transition" placeholder="00000-000" />
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2">Cidade</label>
+        <input type="text" name="cidade" required class="w-full px-4 py-3 bg-black border border-zinc-800 text-white rounded-lg focus:outline-none focus:border-yellow-400 transition" />
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2">Estado</label>
+        <input type="text" name="estado" required maxlength="2" class="w-full px-4 py-3 bg-black border border-zinc-800 text-white rounded-lg focus:outline-none focus:border-yellow-400 transition uppercase" placeholder="SP" />
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2">País</label>
+        <input type="text" name="pais" value="Brasil" required class="w-full px-4 py-3 bg-black border border-zinc-800 text-white rounded-lg focus:outline-none focus:border-yellow-400 transition" />
+      </div>
 
-  <style>
-    .input-style {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      width: 100%;
-      font-size: 0.95rem;
-    }
-    body {
-      font-family: Arial, sans-serif;
-    }
-  </style>
+      <div class="sm:col-span-2 flex flex-col sm:flex-row justify-between gap-3 pt-4">
+        <a href="minhaconta.php" class="px-5 py-3 text-sm uppercase tracking-widest font-bold rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 transition text-center">← Voltar</a>
+        <button type="submit" class="px-7 py-3 text-sm uppercase tracking-widest font-bold rounded-lg bg-yellow-400 hover:bg-yellow-300 text-black transition shadow-lg shadow-yellow-400/10">
+          Salvar Endereço
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
 
-  <?php include '../includes/footer.php'; ?>
-</body>
-</html>
+<?php include '../includes/footer.php'; ?>

@@ -3,85 +3,77 @@ include '../includes/verifica_login.php';
 include '../includes/header.php';
 include '../backend/db.php';
 
-$userId = $_SESSION['usuario_id'];
+$userId = (int) $_SESSION['usuario_id'];
+
+$stmt = $conn->prepare("
+  SELECT p.id, p.nome, p.preco, c.nome AS categoria, MIN(ip.url_imagem) AS imagem
+  FROM favoritos f
+  INNER JOIN produtos p ON f.produto_id = p.id
+  LEFT JOIN categorias c ON p.categoria_id = c.id
+  LEFT JOIN imagens_produto ip ON p.id = ip.produto_id
+  WHERE f.user_id = ?
+  GROUP BY p.id
+  ORDER BY p.nome ASC
+");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meus Favoritos - Loja Durk</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    .line-clamp-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .group:hover .fav-btn {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  </style>
-</head>
-<body class="bg-gradient-to-b from-blue-50 to-white min-h-screen">
+<title>Favoritos · DURK</title>
 
-<main class="max-w-[1400px] mx-auto px-6 py-10">
-  <h1 class="text-5xl font-extrabold text-center text-gray-900 mb-2 animate__animated animate__fadeInDown">💙 Meus Favoritos</h1>
-  <p class="text-center text-gray-600 text-lg mb-10 animate__animated animate__fadeInUp">Seus produtos queridinhos estão aqui!</p>
+<main class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-10 min-h-[60vh]">
 
-  <section class="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 animate__animated animate__fadeIn">
-    <?php
-    $sql = "
-      SELECT p.id, p.nome, p.preco, c.nome AS categoria, MIN(ip.url_imagem) AS imagem
-      FROM favoritos f
-      INNER JOIN produtos p ON f.produto_id = p.id
-      LEFT JOIN categorias c ON p.categoria_id = c.id
-      LEFT JOIN imagens_produto ip ON p.id = ip.produto_id
-      WHERE f.user_id = $userId
-      GROUP BY p.id
-      ORDER BY p.nome ASC
-    ";
-    $result = mysqli_query($conn, $sql);
+  <div class="mb-10">
+    <span class="text-yellow-400 text-xs uppercase tracking-[0.4em] font-bold">/ Lista</span>
+    <h1 class="font-display text-5xl md:text-6xl text-white mt-2">FAVORITOS <i class="fa-solid fa-heart text-pink-500 text-3xl align-middle"></i></h1>
+    <p class="text-zinc-400 mt-2">Os drops que tocaram seu coração.</p>
+  </div>
 
-    if ($result && mysqli_num_rows($result) > 0) {
-      while ($produto = mysqli_fetch_assoc($result)) {
-        echo '<div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 hover:scale-105 duration-300 group flex flex-col relative overflow-hidden" data-aos="zoom-in">';
-        echo '<form action="../backend/favoritar.php" method="POST" class="absolute top-3 right-3 fav-btn opacity-0 transform -translate-y-3 transition duration-300">';
-        echo '<input type="hidden" name="produto_id" value="' . $produto['id'] . '">';
-        echo '<button type="submit" name="acao" value="remover" title="Remover dos Favoritos" class="text-red-500 hover:text-gray-400 text-xl"><i class="fa-solid fa-heart"></i></button>';
-        echo '</form>';
-        echo '<img src="../' . htmlspecialchars($produto['imagem']) . '" alt="' . htmlspecialchars($produto['nome']) . '" class="w-full aspect-[3/4] h-64 object-contain rounded-t-xl">';
-        echo '<div class="p-4 flex flex-col flex-grow">';
-        echo '<h3 class="text-base font-semibold text-gray-800 line-clamp-2">' . htmlspecialchars($produto['nome']) . '</h3>';
-        echo '<p class="text-sm text-gray-500">' . htmlspecialchars($produto['categoria']) . '</p>';
-        echo '<p class="text-green-600 font-bold text-lg mt-1">R$ ' . number_format($produto['preco'], 2, ',', '.') . '</p>';
-        echo '<div class="mt-auto flex justify-between items-center pt-4">';
-        echo '<button title="Adicionar ao carrinho" class="text-gray-600 hover:text-gray-900 text-xl transition"><i class="fa-solid fa-cart-shopping"></i></button>';
-        echo '<a href="produto_detalhes.php?id=' . $produto['id'] . '" class="ml-auto px-4 py-2 rounded-lg text-white font-semibold bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition text-sm">Ver produto</a>';
-        echo '</div>';
-        echo '</div>';
-        echo '</div>';
-      }
-    } else {
-      echo '<p class="col-span-full text-center text-gray-600">Você ainda não favoritou nenhum produto.</p>';
-    }
-
+  <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+    <?php if ($result->num_rows > 0):
+      while ($produto = $result->fetch_assoc()): ?>
+      <div class="group bg-zinc-950 border border-zinc-900 rounded-2xl overflow-hidden hover:border-yellow-400 transition-all duration-500 flex flex-col relative">
+        <form action="../backend/favoritar.php" method="POST" class="absolute top-3 right-3 z-10">
+          <input type="hidden" name="produto_id" value="<?= $produto['id'] ?>">
+          <button type="submit" name="acao" value="remover" title="Remover dos favoritos"
+            class="w-9 h-9 bg-black/70 backdrop-blur rounded-full flex items-center justify-center text-pink-500 hover:text-red-500 transition">
+            <i class="fa-solid fa-heart text-sm"></i>
+          </button>
+        </form>
+        <a href="produto_detalhes.php?id=<?= $produto['id'] ?>" class="block relative aspect-[4/5] bg-zinc-900 overflow-hidden">
+          <?php if (!empty($produto['imagem'])): ?>
+            <img src="../<?= htmlspecialchars($produto['imagem']) ?>" alt="<?= htmlspecialchars($produto['nome']) ?>" class="w-full h-full object-contain p-3 transition-transform duration-700 group-hover:scale-110">
+          <?php else: ?>
+            <div class="w-full h-full flex items-center justify-center text-zinc-700"><i class="fa-solid fa-image text-5xl"></i></div>
+          <?php endif; ?>
+        </a>
+        <div class="p-4 flex flex-col flex-grow">
+          <p class="text-yellow-400 text-[10px] uppercase tracking-widest font-bold mb-1"><?= htmlspecialchars($produto['categoria'] ?? 'Streetwear') ?></p>
+          <h3 class="text-sm font-bold text-white line-clamp-2 mb-3 min-h-[2.5rem] group-hover:text-yellow-400 transition"><?= htmlspecialchars($produto['nome']) ?></h3>
+          <div class="mt-auto flex items-center justify-between gap-2">
+            <p class="text-lg font-bold text-white">R$ <?= number_format($produto['preco'], 2, ',', '.') ?></p>
+            <a href="produto_detalhes.php?id=<?= $produto['id'] ?>" class="bg-zinc-900 hover:bg-yellow-400 hover:text-black text-white text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-lg transition">
+              Ver
+            </a>
+          </div>
+        </div>
+      </div>
+      <?php endwhile;
+    else: ?>
+      <div class="col-span-full text-center py-20">
+        <i class="fa-regular fa-heart text-6xl text-zinc-800 mb-4"></i>
+        <p class="text-zinc-500 text-lg mb-2">Sua lista de favoritos está vazia.</p>
+        <p class="text-zinc-600 text-sm mb-8">Salva os drops que você curte clicando no ❤.</p>
+        <a href="vestuario.php" class="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-sm transition">
+          <i class="fa-solid fa-arrow-right"></i> Ver catálogo
+        </a>
+      </div>
+    <?php endif;
+    $stmt->close();
     mysqli_close($conn);
     ?>
   </section>
 </main>
 
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>AOS.init();</script>
 <?php include '../includes/footer.php'; ?>
-</body>
-</html>

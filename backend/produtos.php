@@ -1,68 +1,37 @@
 <?php
 include 'db.php';
-?>
 
-<style>
-.produtos-container {
-    text-align: center;
-    padding: 40px 20px;
-}
-
-.produtos-container h2 {
-    font-size: 2rem;
-    margin-bottom: 20px;
-}
-
-.produtos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 30px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.produto-card {
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 15px;
-    background-color: #fff;
-    transition: transform 0.3s;
-}
-
-.produto-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.produto-card img {
-    width: 100%;
-    height: auto;
-    border-radius: 5px;
-    margin-bottom: 10px;
-}
-</style>
-
-<?php
-$query = "SELECT * FROM produtos LIMIT 4";
+$query = "SELECT p.id, p.nome, p.descricao, p.preco,
+                 (SELECT MIN(ip.url_imagem) FROM imagens_produto ip WHERE ip.produto_id = p.id) AS imagem
+          FROM produtos p
+          ORDER BY p.id DESC
+          LIMIT 4";
 $result = mysqli_query($conn, $query);
-
-echo '<section class="produtos-container">';
-echo '<h2>Novidades</h2>';
-echo '<div class="produtos-grid">';
-
-if (mysqli_num_rows($result) > 0) {
-    while ($produto = mysqli_fetch_assoc($result)) {
-        echo '<div class="produto-card">';
-        echo '<img src="imagens/sem-imagem.png" alt="Produto" />';
-        echo '<h3>' . htmlspecialchars($produto['nome']) . '</h3>';
-        echo '<p>' . htmlspecialchars($produto['descricao']) . '</p>';
-        echo '<p><strong>R$ ' . number_format($produto['preco'], 2, ',', '.') . '</strong></p>';
-        echo '</div>';
-    }
-} else {
-    echo '<p>Nenhum produto encontrado.</p>';
-}
-
-echo '</div>';
-echo '</section>';
 ?>
+
+<section class="bg-black py-16">
+  <div class="max-w-7xl mx-auto px-6">
+    <h2 class="font-display text-4xl text-white mb-8 text-center">NOVIDADES</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <?php if ($result && mysqli_num_rows($result) > 0):
+        while ($p = mysqli_fetch_assoc($result)): ?>
+          <a href="../views/produto_detalhes.php?id=<?= $p['id'] ?>" class="group bg-zinc-950 border border-zinc-900 hover:border-yellow-400 rounded-2xl overflow-hidden transition">
+            <div class="aspect-square bg-zinc-900 p-4">
+              <?php if (!empty($p['imagem'])): ?>
+                <img src="../<?= htmlspecialchars($p['imagem']) ?>" class="w-full h-full object-contain transition-transform group-hover:scale-110" />
+              <?php else: ?>
+                <div class="w-full h-full flex items-center justify-center text-zinc-700"><i class="fa-solid fa-image text-5xl"></i></div>
+              <?php endif; ?>
+            </div>
+            <div class="p-4">
+              <h3 class="text-white font-bold text-sm line-clamp-2 mb-2"><?= htmlspecialchars($p['nome']) ?></h3>
+              <p class="text-yellow-400 font-bold">R$ <?= number_format($p['preco'], 2, ',', '.') ?></p>
+            </div>
+          </a>
+        <?php endwhile;
+      else: ?>
+        <p class="col-span-full text-zinc-500 text-center">Nenhum produto encontrado.</p>
+      <?php endif; ?>
+    </div>
+  </div>
+</section>

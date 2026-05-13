@@ -20,74 +20,90 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $_SESSION['usuario_id'] = $usuario['id'];
             $_SESSION['usuario_nome'] = $usuario['nome'];
             $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
-        
+
             if ($usuario['tipo_usuario'] === 'admin') {
                 header("Location: ../admin/index.php");
             } else {
                 header("Location: ../views/index.php");
             }
             exit();
-        }        
+        } else {
+            $erroLogin = 'Senha incorreta.';
+        }
     } else {
         $erroLogin = 'Email não encontrado.';
     }
 
     $stmt->close();
-    $conn->close();
 }
 ?>
 
+<?php include '../includes/header.php'; ?>
 
-<!DOCTYPE html>
-<html lang="pt-br">
+<title>Entrar · DURK</title>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
-    <link rel="icon" type="image/png" href="imagens/logo.png" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@animxyz/core@0.4.0/dist/animxyz.min.css" />
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-    </style>
-</head>
+<main class="min-h-screen flex items-center justify-center px-4 py-16 relative overflow-hidden">
+  <div class="absolute inset-0 pointer-events-none opacity-[0.03]">
+    <p class="font-display text-[20rem] leading-none text-white text-center whitespace-nowrap mt-20">DURK</p>
+  </div>
 
-<body class="bg-gray-100">
+  <div class="w-full max-w-md relative">
+    <div class="bg-zinc-950 border border-zinc-900 rounded-2xl p-8 shadow-2xl">
+      <div class="text-center mb-8">
+        <span class="text-yellow-400 text-xs uppercase tracking-[0.4em] font-bold">/ Acesso</span>
+        <h2 class="font-display text-4xl text-white mt-2">ENTRAR</h2>
+        <p class="text-zinc-500 text-sm mt-2">Bem-vindo de volta à família.</p>
+      </div>
 
-    <?php include '../includes/header.php'; ?>
+      <form method="POST" action="" class="space-y-4">
+        <?php if (!empty($erroLogin)): ?>
+          <div class="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 flex items-center gap-2">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span><?= htmlspecialchars($erroLogin) ?></span>
+          </div>
+        <?php endif; ?>
 
-    <main class="min-h-screen flex items-center justify-center px-4 py-16">
-        <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg animxyz-in" xyz="fade down duration-10 stagger ease-in-out">
-            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6 xyz-nested" xyz="fade small stagger">Login</h2>
-
-            <form method="POST" action="" class="space-y-5 xyz-nested" xyz="fade up stagger">
-                <?php if (!empty($erroLogin)): ?>
-                    <p class="text-red-500 text-center text-sm"><?= $erroLogin ?></p>
-                <?php endif; ?>
-
-                <input type="email" name="email" placeholder="Email" required
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-800 transition" />
-
-                <input type="password" name="senha" placeholder="Senha" required
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-800 transition" />
-
-                <p class="text-sm text-gray-600 text-center">
-                    Não tem cadastro?
-                    <a href="../views/cadastro.php" class="text-blue-600 hover:underline font-medium">Clique aqui</a>
-                </p>
-
-                <button type="submit"
-                    class="w-full py-3 bg-gray-800 text-white rounded-xl hover:bg-gray-900 transition-all duration-300 transform hover:scale-[1.02] shadow-md">
-                    Entrar
-                </button>
-
-            </form>
+        <div>
+          <label class="block text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2">Email</label>
+          <div class="relative">
+            <i class="fa-regular fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600"></i>
+            <input type="email" name="email" placeholder="voce@email.com" required
+              class="w-full pl-11 pr-4 py-3 bg-black border border-zinc-800 text-white rounded-lg focus:outline-none focus:border-yellow-400 transition placeholder-zinc-600" />
+          </div>
         </div>
-    </main>
-    <?php include '../includes/footer.php'; ?>
-</body>
 
-</html>
+        <div>
+          <label class="block text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-2">Senha</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600"></i>
+            <input type="password" name="senha" id="loginSenha" placeholder="••••••••" required
+              class="w-full pl-11 pr-11 py-3 bg-black border border-zinc-800 text-white rounded-lg focus:outline-none focus:border-yellow-400 transition placeholder-zinc-600" />
+            <button type="button" onclick="toggleLoginPwd()" class="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-yellow-400 transition">
+              <i id="iconLoginPwd" class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 bg-yellow-400 hover:bg-yellow-300 text-black rounded-lg font-bold uppercase tracking-wider transition shadow-lg shadow-yellow-400/10">
+          Entrar
+        </button>
+
+        <p class="text-sm text-zinc-500 text-center pt-2">
+          Ainda não tem cadastro?
+          <a href="cadastro.php" class="text-yellow-400 hover:text-yellow-300 font-bold ml-1">Criar conta</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script>
+  function toggleLoginPwd() {
+    const i = document.getElementById('loginSenha');
+    const ic = document.getElementById('iconLoginPwd');
+    if (i.type === 'password') { i.type = 'text'; ic.className = 'fa-regular fa-eye-slash'; }
+    else { i.type = 'password'; ic.className = 'fa-regular fa-eye'; }
+  }
+</script>
+
+<?php include '../includes/footer.php'; ?>
